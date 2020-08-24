@@ -1,0 +1,186 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.1.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'>PDF Uploader</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+
+  $( document ).ready(function() {
+    prepRequest().then(makeRequest);
+  });
+  
+  async function prepRequest() {
+    var config = {
+      async: 'promise',
+      realm: window.location.host.split('.')[0],
+    }
+    var jsParams = BaseHelpers.getUrlParam('params')
+    var params = JSON.parse(jsParams);
+    var ticket = await (new Base(config)).getOneTimeTicket();
+    params.uploadParams.connection = { realm: config.realm, ticket: ticket }
+    params.genOptions.url += `&ticket=${ticket}`
+    
+    return params;
+  }
+
+  async function makeRequest(params){
+    var endpoint = 'https://us-central1-form-engine-92d38.cloudfunctions.net/uploadViaGenFromUrl';
+    // var endpoint = 'http://localhost:5000/form-engine-92d38/us-central1/uploadViaGenFromUrl';
+
+    $.ajax({
+      type: 'POST',
+      url: endpoint,
+      data: JSON.stringify(params),
+      contentType: 'application/json',
+      success: function(res){
+        console.log({res, params});
+        handleSuccess(res, params);
+        $('.loader-wrapper').hide();
+      },
+      error: function(err){{
+        console.log({err, params})
+        $('body').append(`<h2>ERROR!</h2>`)
+        $('body').append(JSON.stringify(err))
+        $('.loader-wrapper').hide();
+      }}
+    })
+  }
+  
+  function handleSuccess(res, params) {
+    if(res.errorMessages.length) {
+      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
+    }
+    
+    $('body').append(`<h2>SUCCESS!</h2>`);
+    $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
+    return setTimeout(window.close, 2000);
+    
+  }
+  </script>
+  <!-- 
+    //QB FORMULA
+    //static - do not change
+    var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
+    var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-upload-request-v1.html"; //ensure this dbPage exists
+
+    //basic info
+    var Text fileName =       "Royalty Invoice - " & [Year Licensee Key] & ".pdf"; 
+    var Number pdfUploadFid = 69;           //FID of file attachemnt field in this table. set to 0 to omit upload
+    var Number pdfUploadRid = [Record ID#]; //RID to upload attachment to. set to 0 to omit upload
+    var Text targetPageUrl =  $dbPageBase & "pageID=9&licYearRid=" & [Record ID#]; //form/page to print
+
+    //rarely modified
+    var Text pageMargin =      "0.5in";
+    var Text pageFormat =      "A4";
+    var Text printBackground = "true"; // set to "false" to conserve printer ink
+    var Text waitSelectors =   "[]"; // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
+
+    //Repeating Header/Footer: Set to "<div></div>" to omit. set to "" for default. See note below.
+    var Text header = "<div></div>";
+    var Text footer = "<div></div>";
+    
+    //  FOOTER EXAMPLE - page X of Y on bottom right
+    //  "<div style='font-size: 12px; width: 100%; display: flex; justify-content: flex-end; margin-right: 0.5in'>" & 
+    //      "<div>Page&nbsp;</div>" & 
+    //      "<div class='pageNumber'></div>" & 
+    //      "<div>&nbsp;of&nbsp;</div>" & 
+    //      "<div class='totalPages'></div>" & 
+    //  "</div>";
+
+    //  footer/header is raw html that will repeat on each page.
+    //  special classes available for header/footer:
+    // - <div class='date'></div>:        formatted print date
+    // - <div class='title'></div>:       document title
+    // - <div class='url'></div>:         document location
+    // - <div class='pageNumber'></div>:  current page number
+    // - <div class='totalPages'></div>:  total pages in the document
+
+    //  ONLY the above classes will have an effect. 
+    //  Other styles must be applied INLINE within header/footer HTML
+
+
+    $pdfHandlerPage & "&params=" & URLEncode(
+    "{" &
+        "\"genOptions\": {" &
+          "\"url\": \"" & $targetPageUrl & "\"," &
+          "\"pdfOptions\": {"  &
+            "\"displayHeaderFooter\": true," &
+            "\"headerTemplate\": \"" & $header & "\"," &
+            "\"footerTemplate\": \"" & $footer & "\"," &
+            "\"printBackground\": " & $printBackground & "," &
+            "\"format\": \"" & $pageFormat & "\"" &
+          "}," &
+          "\"customOptions\": {" &
+            "\"waitEval\": false," &
+            "\"imgEval\": true," &
+            "\"waitSelectors\": " & $waitSelectors & "," &
+            "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
+            "\"scriptTags\": []" &
+          "}" &
+      "}," &
+      "\"uploadParams\": {" & 
+        "\"query\": {" & 
+            "\"dbid\": \"" & Dbid() & "\"," & 
+            "\"rid\": \"" & $pdfUploadRid & "\"," & 
+            "\"field\": {" &
+                "\"fid\": \"" & $pdfUploadFid & "\"," & 
+                "\"filename\": \"" & $filename & "\"" & 
+            "}" &
+        "}" &
+      "}" &
+    "}")
+   -->
+  <style>
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>

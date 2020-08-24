@@ -1,0 +1,143 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.1.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'> PDF Generator</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+    // turn URL with query params into ticketed POST request
+    // encoded complete endpoint should be param "url"
+    
+  $( document ).ready(function() {
+    makeTicketedRequest();
+  });
+
+  async function makeTicketedRequest(){
+    var config = {
+      async: 'promise',
+      realm: window.location.host.split('.')[0],
+    }
+    var [endpoint, query] = BaseHelpers.getUrlParam('url').split('?');
+    var params = parseParams(query);
+    params.ticket = await (new Base(config)).getOneTimeTicket();
+    params.realm = config.realm;
+    params.pageUrl += `&ticket=${params.ticket}`
+    
+    // params.pageUrl = params.pageUrl.replace('https://basf.quickbase.com/db/bivu5mqb6', 'http://localhost:3000')
+    endpoint = 'http://localhost:5000/form-engine-92d38/us-central1/dbPagePdf'
+    
+    $.ajax({
+      type: 'POST',
+      url: endpoint,
+      data: JSON.stringify(params),
+      contentType: 'application/json',
+      success: function(res){
+        handleSuccess(res, params);
+        console.log({res, params});
+        $('.loader-wrapper').hide();
+      },
+      error: function(err){{
+        console.log({err, params})
+        $('body').append(`<h2>ERROR!</h2>`)
+        $('body').append(JSON.stringify(err))
+        $('.loader-wrapper').hide();
+      }}
+    })
+  }
+  
+  function handleSuccess(res, params) {
+    if(res.msg !== 'success') {
+      return $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${res.msg}</h4>`)
+    }
+    
+    $('body').append(`<h2>SUCCESS!</h2>`)
+    
+    if (params.download && res.result.pdf){
+      $('body').append(`<h4>downloading PDF...</h4>`)
+      downloadPDF(res.result.pdf, params.filename)
+    }
+    
+    $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`)
+    
+    // return setTimeout(window.close, 2000)
+    
+  }
+  
+  function parseParams(str) {
+    return str.split('&').reduce(function (params, param) {
+      var paramSplit = param.split('=').map(function (value) {
+        var decoded = decodeURIComponent(value.replace(/\+/g, ' '));
+        if(decoded === 'true') return true;
+        if(decoded === 'false') return false;
+        return decoded
+        
+      });
+      params[paramSplit[0]] = paramSplit[1];
+      return params;
+    }, {});
+  }
+
+  function downloadPDF(base64pdf, filename='generated_pdf.pdf') {
+      const downloadLink = document.createElement("a");
+      downloadLink.href = base64pdf;
+      downloadLink.download = filename;
+      downloadLink.click();
+  }
+
+
+
+
+  </script>
+  <style>
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>
