@@ -1,0 +1,28 @@
+https://us-central1-form-engine-prod.cloudfunctions.net/uploadViaGenFromUrl
+
+{
+  "genOptions": {
+    "url": "[Print Request PDF]",
+    "pdfOptions": { 
+      "displayHeaderFooter": true,
+      "headerTemplate": "<div></div>",
+      "footerTemplate": "<div></div>",
+      "printBackground": true,
+      "format": "A4"
+    }
+  },
+  "uploadParams": { 
+    "connection": {
+      "realm": "",
+      "userToken": ""
+    },
+    "query": { 
+      "dbid": "%dbid%",
+      "rid": "[Record ID#]",
+      "field": {
+        "fid": "8",
+        "filename": "Generated File.pdf"
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "dbpage-helpers",
+  "version": "1.0.0",
+  "description": "PUBLIC repo to allow SCs to create Pdf-Generate/upload QB Buttons",
+  "main": "quickbase-cli.config.js",
+  "dependencies": {
+    "eslint-plugin-html": "^6.1.0",
+    "quickbase": "^4.1.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdvantageIntegratedSolutions/dbpage-helpers.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AdvantageIntegratedSolutions/dbpage-helpers/issues"
+  },
+  "homepage": "https://github.com/AdvantageIntegratedSolutions/dbpage-helpers#readme"
+}

@@ -1,0 +1,12 @@
+https://us-central1-form-engine-prod.cloudfunctions.net/genFromId
+Content-Type: application/json
+{
+  "templateId": "-LlWiagsEsNkhGgL4Dsu",
+  "rids": {
+    "-LlWij41Ng_h-q0tJNeN": "[Record ID#]"
+  },
+  "connection": {
+    "realm": "advantageintegratedsolutionsinc",
+    "userToken": ""
+  }
+}

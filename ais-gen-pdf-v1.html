@@ -1,0 +1,181 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.1.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'>Generating PDF...</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+
+  $( document ).ready(function() {
+    prepRequest().then(makeRequest);
+  });
+  
+  async function prepRequest() {
+    var config = {
+      async: 'promise',
+      realm: window.location.host.split('.')[0],
+    }
+    var jsParams = BaseHelpers.getUrlParam('params')
+    var params = JSON.parse(jsParams);
+    var ticket = await (new Base(config)).getOneTimeTicket();
+    params.url += `&ticket=${ticket}`
+    
+    return params;
+  }
+
+  async function makeRequest(params){
+    var endpoint = 'https://us-central1-form-engine-prod.cloudfunctions.net/b64PdfFromUrl';
+    // var endpoint = 'http://localhost:5000/form-engine-92d38/us-central1/b64PdfFromUrl';
+
+    $.ajax({
+      type: 'POST',
+      url: endpoint,
+      data: JSON.stringify(params),
+      contentType: 'application/json',
+      success: function(res){
+        console.log({res, params});
+        handleSuccess(res, params);
+        $('.loader-wrapper').hide();
+      },
+      error: function(err){{
+        console.log({err, params})
+        $('body').append(`<h2>ERROR!</h2>`)
+        $('body').append(JSON.stringify(err))
+        $('.loader-wrapper').hide();
+      }}
+    })
+  }
+  
+  function handleSuccess(res, params) {
+    var objbuilder = '';
+    objbuilder += ('<object width="100%" height="100%" data="');
+    objbuilder += (res.pdf);
+    objbuilder += ('" type="application/pdf" class="internal">');
+    objbuilder += ('<embed src="');
+    objbuilder += (res.pdf);
+    objbuilder += ('" type="application/pdf" />');
+    objbuilder += ('</object>');
+    document.body.innerHTML = objbuilder;
+    document.body.style.height = '100vh';
+    document.body.style.margin = 0;
+    
+    if(res.errorMessages.length) {
+      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
+    }
+    
+  }
+  </script>
+  <!-- 
+    //QB FORMULA
+    //static - do not change
+    var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
+    var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-pdf-v1.html"; //ensure this dbPage exists
+
+    //basic info
+    var Text targetPageUrl =  $dbPageBase & "pageID=215&assessmentsRid=" & [Record ID#]; //form/page to print
+
+    //rarely modified
+    var Text pageMargin =      "0.5in";
+    var Text pageFormat =      "A4";
+    var Text printBackground = "true"; // set to "false" to conserve printer ink
+    var Text waitSelectors =   "[]"; // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
+
+    //Repeating Header/Footer: Set to "<div></div>" to omit. set to "" for default. See note below.
+    var Text header = "<div></div>";
+    var Text footer = "<div></div>";
+    
+    //  FOOTER EXAMPLE - page X of Y on bottom right
+    //  "<div style='font-size: 12px; width: 100%; display: flex; justify-content: flex-end; margin-right: 0.5in'>" & 
+    //      "<div>Page&nbsp;</div>" & 
+    //      "<div class='pageNumber'></div>" & 
+    //      "<div>&nbsp;of&nbsp;</div>" & 
+    //      "<div class='totalPages'></div>" & 
+    //  "</div>";
+
+    //  footer/header is raw html that will repeat on each page.
+    //  special classes available for header/footer:
+    // - <div class='date'></div>:        formatted print date
+    // - <div class='title'></div>:       document title
+    // - <div class='url'></div>:         document location
+    // - <div class='pageNumber'></div>:  current page number
+    // - <div class='totalPages'></div>:  total pages in the document
+
+    //  ONLY the above classes will have an effect. 
+    //  Other styles must be applied INLINE within header/footer HTML
+
+
+    $pdfHandlerPage & "&params=" & URLEncode(
+    "{" &
+      "\"url\": \"" & $targetPageUrl & "\"," &
+      "\"pdfOptions\": {"  &
+        "\"displayHeaderFooter\": true," &
+        "\"headerTemplate\": \"" & $header & "\"," &
+        "\"footerTemplate\": \"" & $footer & "\"," &
+        "\"printBackground\": " & $printBackground & "," &
+        "\"format\": \"" & $pageFormat & "\"" &
+      "}," &
+      "\"customOptions\": {" &
+        "\"waitEval\": false," &
+        "\"imgEval\": true," &
+        "\"waitSelectors\": " & $waitSelectors & "," &
+        "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
+        "\"scriptTags\": []" &
+      "}" &
+    "}")
+   -->
+  <style>
+    body{
+      
+    }
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>

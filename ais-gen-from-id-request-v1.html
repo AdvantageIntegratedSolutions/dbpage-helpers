@@ -1,0 +1,127 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.1.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'>PDF Generator</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+
+  $( document ).ready(function() {
+    prepRequest().then(makeRequest);
+  });
+  
+  async function prepRequest() {
+    var config = {
+      async: 'promise',
+      realm: window.location.host.split('.')[0],
+    }
+    var templateId = BaseHelpers.getUrlParam('templateId')
+    var encRids = BaseHelpers.getUrlParam('rids')
+    var rids = JSON.parse(encRids);
+    var ticket = await (new Base(config)).getOneTimeTicket();
+    const connection = { realm: config.realm, ticket }
+    const params = {templateId, rids, connection}
+    return params;
+  }
+
+  async function makeRequest(params){
+    var endpoint = 'https://us-central1-form-engine-prod.cloudfunctions.net/genFromId';
+    // var endpoint = 'http://localhost:5000/form-engine-prod/us-central1/genFromId';
+
+    $.ajax({
+      type: 'POST',
+      url: endpoint,
+      data: JSON.stringify(params),
+      contentType: 'application/json',
+      success: function(res){
+        console.log({res, params});
+        handleSuccess(res, params);
+        $('.loader-wrapper').hide();
+      },
+      error: function(err){{
+        console.log({err, params})
+        $('body').append(`<h2>ERROR!</h2>`)
+        $('body').append(JSON.stringify(err))
+        $('.loader-wrapper').hide();
+      }}
+    })
+  }
+  
+  function handleSuccess(res, params) {
+    if(res.errorMessages.length) {
+      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
+    }
+    
+    $('body').append(`<h2>SUCCESS!</h2>`);
+    $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
+    var returnUrl = BaseHelpers.getUrlParam('returnUrl')
+    console.log({returnUrl});
+    
+    return setTimeout(() => window.location.href = returnUrl, 2000);
+    
+  }
+  </script>
+  <!-- 
+    //QB FORMULA
+    //static - do not change
+    var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
+    var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-upload-request-v1.html"; //ensure this dbPage exists
+
+    $pdfHandlerPage & 
+    "&templateId=-LlWiagsEsNkhGgL4Dsu" & 
+    "&rids=" & URLEncode("{\"-LlWij41Ng_h-q0tJNeN\": \"" & [Record ID#] & "\"}")
+    "&returnUrl=" & URLEncode(URLRoot() & "db/bpmpky53p?a=dr&rid=" & [Record ID#] & "&rl=nzn") & 
+   -->
+  <style>
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>
