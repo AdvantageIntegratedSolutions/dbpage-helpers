@@ -58,9 +58,8 @@
     $('body').append(`<h2>SUCCESS!</h2>`);
     $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
     var returnUrl = BaseHelpers.getUrlParam('returnUrl')
-    console.log({returnUrl});
     
-    return setTimeout(() => window.location.href = returnUrl, 2000);
+    return setTimeout(() => returnUrl ? location.href=returnUrl : history.back(), 2000);
     
   }
   </script>
