@@ -18,12 +18,14 @@
       async: 'promise',
       realm: window.location.host.split('.')[0],
     }
-    var templateId = BaseHelpers.getUrlParam('templateId')
-    var encRids = BaseHelpers.getUrlParam('rids')
+    var templateId = BaseHelpers.getUrlParam('templateId');
+    var encRids = BaseHelpers.getUrlParam('rids');
+    var appToken = BaseHelpers.getUrlParam('apptoken');
     var rids = JSON.parse(encRids);
     var ticket = await (new Base(config)).getOneTimeTicket();
-    const connection = { realm: config.realm, ticket }
-    const params = {templateId, rids, connection}
+    const connection = { realm: config.realm, ticket };
+    if (appToken) connection.appToken = appToken;
+    const params = {templateId, rids, connection};
     return params;
   }
 
@@ -64,15 +66,24 @@
   }
   </script>
   <!-- 
-    //QB FORMULA
-    //static - do not change
-    var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
-    var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-upload-request-v1.html"; //ensure this dbPage exists
-
+    // QB FORMULA
+    
+    var text templateId = "-MJSW9PnXwkDFPv9ygtQ";
+    
+    var text firstRefId = "-MJSWrJILVMqn6Seof2Y";
+    var text firstRefKey = [Record ID#];
+    
+    // IF NO APPTOKEN, THEN apptoken = "";
+    var text apptoken = "";
+    
+    var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&pagename=";
+    var Text pdfHandlerPage = $dbPageBase & "ais-gen-from-id-request-v1.html"; //ensure dbPage exists
+    
     $pdfHandlerPage & 
-    "&templateId=-LlWiagsEsNkhGgL4Dsu" & 
-    "&rids=" & URLEncode("{\"-LlWij41Ng_h-q0tJNeN\": \"" & [Record ID#] & "\"}")
-    "&returnUrl=" & URLEncode(URLRoot() & "db/bpmpky53p?a=dr&rid=" & [Record ID#] & "&rl=nzn") & 
+    "&returnUrl=" & URLEncode(URLRoot() & "db/" & Dbid() & "?a=dr&rid=" & [Record ID#]) & 
+    "&templateId=" & $templateId & 
+    "&rids=" & URLEncode("{\"" & $firstRefId & "\": \"" & $firstRefKey & "\"}") & 
+    If(Length($apptoken) > 0, "&apptoken=" & $apptoken, "")
    -->
   <style>
     #rct-loader:before, #rct-loader:after{
