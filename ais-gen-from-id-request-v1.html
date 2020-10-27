@@ -73,8 +73,8 @@
     
     var text templateId = "-MJSW9PnXwkDFPv9ygtQ";
     
-    var text ref1 = "-MJSWrJILVMqn6Seof2Y";
-    var text ref1Id = ToText([Record ID#]);
+    var text refA = "-MJSWrJILVMqn6Seof2Y";
+    var text refAId = ToText([Record ID#]);
     
     // IF NO APPTOKEN, THEN apptoken = "";
     var text apptoken = "";
@@ -86,8 +86,9 @@
     $pdfHandlerPage & 
     "&returnUrl=" & URLEncode(URLRoot() & "db/" & Dbid() & "?a=dr&rid=" & [Record ID#]) & 
     "&templateId=" & $templateId & 
-    "&rids=" & URLEncode("{\"" & $ref1 & "\": \"" & $ref1Id & "\"}") & 
+    "&rids=" & URLEncode("{\"" & $refA & "\": \"" & $refAId & "\"}") & 
     If(Length($apptoken) > 0, "&apptoken=" & $apptoken, "")
+    
    -->
   <style>
     #rct-loader:before, #rct-loader:after{
