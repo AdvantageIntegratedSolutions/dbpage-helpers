@@ -10,25 +10,29 @@
   <script>
 
   $( document ).ready(function() {
-    getParams().then(makeRequest);
+    getTicket().then(getParams).then(makeRequest);
   });
   
-  async function getParams() {
+  function getTicket(){
     var config = {
       async: 'promise',
       realm: window.location.host.split('.')[0]
     }
+    return (new Base(config)).getOneTimeTicket();
+  }
+  
+  function getParams(ticket) {
+
     var templateId = BaseHelpers.getUrlParam('templateId');
     var encRids = BaseHelpers.getUrlParam('rids');
     var appToken = BaseHelpers.getUrlParam('apptoken');
     var rids = JSON.parse(encRids);
-    var ticket = await (new Base(config)).getOneTimeTicket();
-    const connection = { realm: config.realm, ticket };
+    const connection = { realm: window.location.host.split('.')[0], ticket };
     if (appToken) connection.appToken = appToken;
     return {templateId, rids, connection};
   }
 
-  async function makeRequest(params){
+  function makeRequest(params){
     var endpoint = 'https://us-central1-form-engine-prod.cloudfunctions.net/genFromId';
     // var endpoint = 'http://localhost:5000/form-engine-prod/us-central1/genFromId';
 
