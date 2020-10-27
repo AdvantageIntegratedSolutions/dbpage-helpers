@@ -10,13 +10,13 @@
   <script>
 
   $( document ).ready(function() {
-    prepRequest().then(makeRequest);
+    getParams().then(makeRequest);
   });
   
-  async function prepRequest() {
+  async function getParams() {
     var config = {
       async: 'promise',
-      realm: window.location.host.split('.')[0],
+      realm: window.location.host.split('.')[0]
     }
     var templateId = BaseHelpers.getUrlParam('templateId');
     var encRids = BaseHelpers.getUrlParam('rids');
@@ -25,8 +25,7 @@
     var ticket = await (new Base(config)).getOneTimeTicket();
     const connection = { realm: config.realm, ticket };
     if (appToken) connection.appToken = appToken;
-    const params = {templateId, rids, connection};
-    return params;
+    return {templateId, rids, connection};
   }
 
   async function makeRequest(params){
@@ -70,19 +69,20 @@
     
     var text templateId = "-MJSW9PnXwkDFPv9ygtQ";
     
-    var text firstRefId = "-MJSWrJILVMqn6Seof2Y";
-    var text firstRefKey = [Record ID#];
+    var text ref1 = "-MJSWrJILVMqn6Seof2Y";
+    var text ref1Id = ToText([Record ID#]);
     
     // IF NO APPTOKEN, THEN apptoken = "";
     var text apptoken = "";
     
     var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&pagename=";
-    var Text pdfHandlerPage = $dbPageBase & "ais-gen-from-id-request-v1.html"; //ensure dbPage exists
+    //ensure dbPage exists
+    var Text pdfHandlerPage = $dbPageBase & "ais-gen-from-id-request-v1.html"; 
     
     $pdfHandlerPage & 
     "&returnUrl=" & URLEncode(URLRoot() & "db/" & Dbid() & "?a=dr&rid=" & [Record ID#]) & 
     "&templateId=" & $templateId & 
-    "&rids=" & URLEncode("{\"" & $firstRefId & "\": \"" & $firstRefKey & "\"}") & 
+    "&rids=" & URLEncode("{\"" & $ref1 & "\": \"" & $ref1Id & "\"}") & 
     If(Length($apptoken) > 0, "&apptoken=" & $apptoken, "")
    -->
   <style>
