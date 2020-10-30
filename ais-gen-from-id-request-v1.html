@@ -8,18 +8,19 @@
   <h3 class='title'>PDF Generator</h3>
   <div class="loader-wrapper"><div id="rct-loader"></div></div>
   <script>
+  
+  var config = {
+    async: 'promise',
+    realm: window.location.host.split('.')[0]
+  }
+  
+  function getTicket(){
+    return (new Base(config)).getOneTimeTicket();
+  }
 
   $( document ).ready(function() {
     getTicket().then(getParams).then(makeRequest);
   });
-  
-  function getTicket(){
-    var config = {
-      async: 'promise',
-      realm: window.location.host.split('.')[0]
-    }
-    return (new Base(config)).getOneTimeTicket();
-  }
   
   function getParams(ticket) {
 
@@ -27,7 +28,7 @@
     var encRids = BaseHelpers.getUrlParam('rids');
     var appToken = BaseHelpers.getUrlParam('apptoken');
     var rids = JSON.parse(encRids);
-    const connection = { realm: window.location.host.split('.')[0], ticket };
+    var connection = { realm: config.realm, ticket: ticket };
     if (appToken) connection.appToken = appToken;
     return {templateId, rids, connection};
   }

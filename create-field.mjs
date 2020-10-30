@@ -10,10 +10,14 @@ async function qbApi(
     throw error
   }
 }
-
+fields needed 
+// source
+// target
+// filename
+// status
 export async function createPdfViewBtn({conn, dbid, label, pageUrlFormula, footer, header}) {
   const addFieldQry = { dbid, type: "url", mode: "virtual", label };
-  const formula = getFormula(pageUrlFormula, footer, header)
+  const formula = getFormula({pageUrlFormula, footer, header})
   console.log({formula});
   const newField = await qbApi("API_AddField", conn, addFieldQry);
   console.log({newField});
@@ -24,7 +28,7 @@ export async function createPdfViewBtn({conn, dbid, label, pageUrlFormula, foote
   const updateResult = await qbApi("API_SetFieldProperties", conn, fieldProps);
 }
 
-const getFormula = (pageUrlFormula, footer="<div></div>", header="<div></div>") => `
+const getFormula = ({pageUrlFormula, footer="<div></div>", header="<div></div>"}) => `
 //QB FORMULA
 //static - do not change
 var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";

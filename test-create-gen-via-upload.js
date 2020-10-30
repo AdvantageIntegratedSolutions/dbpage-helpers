@@ -1,4 +1,4 @@
-import {createPdfViewBtn} from './create-field.mjs'
+require( './create-gen-via-upload');
 const pdfFooter = () => {
   const left = '<div></div>'
   const right = "<span>WP-4A Page <span class='pageNumber'></span></span>"
@@ -7,15 +7,17 @@ const pdfFooter = () => {
 }
 var params = {
   conn: {
-    realm: 'rci',
-    userToken: 'by2kdj_u7a_dd277xyce9tjdpssgacgb4ym28s'
+    realm: 'advantageintegratedsolutionsinc',
+    userToken: 'b3t2xq_bcf_89fq2bcniizy6b3y4b5nwdv82m'
   },
-  dbid: 'bk6xk8yhm',
-  label: 'ZZZ Test Gen Button',
-  paramFormula: '"pageID=215&assessmentsRid=" & [Record ID#]',
+  dbid: 'bpmpky53p',
+  label: 'new filename gen url',
+  pdfUploadFid : '20',
+  pageUrlFormula: '[PRINT Ashley PDF GEN (Test) _ HR Central]',
+  // filenameFormula
   // footer: pdfFooter()
 }
 console.log({params});
-createPdfViewBtn(params)
+createBtn(params)
 
 
