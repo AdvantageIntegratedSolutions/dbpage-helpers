@@ -60,10 +60,16 @@
     }
     
     $('body').append(`<h2>SUCCESS!</h2>`);
-    $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
     
     var returnUrl = BaseHelpers.getUrlParam('returnUrl');
-    return setTimeout(() => returnUrl ? location.href=returnUrl : history.back(), 2000);
+    
+    if (returnUrl) {
+      location.href = returnUrl;
+      
+    } else {
+      $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
+      setTimeout(() => history.back(), 2000);
+    }
     
   }
   </script>
@@ -78,7 +84,8 @@
     var Number pdfUploadFid = 69;           //FID of file attachemnt field in this table. set to 0 to omit upload
     var Number pdfUploadRid = [Record ID#]; //RID to upload attachment to. set to 0 to omit upload
     var Text targetPageUrl =  $dbPageBase & "pageID=9&licYearRid=" & [Record ID#]; //form/page to print
-
+    var Text returnUrl =     "https://${realm}.quickbase.com/up/" & Dbid() & "/a/r" & [Record ID#] & "/e" & $pdfUploadFid & "/v0";
+    var Boolean openFile =   false;
     //rarely modified
     var Text pageMargin =      "0.5in";
     var Text pageFormat =      "A4";
@@ -109,7 +116,9 @@
     //  Other styles must be applied INLINE within header/footer HTML
 
 
-    $pdfHandlerPage & "&params=" & URLEncode(
+    $pdfHandlerPage & 
+    "&returnUrl=" & $returnUrl & 
+    If($openFile, "&openFile=true", "") & "&params=" & URLEncode(
     "{" &
         "\"genOptions\": {" &
           "\"url\": \"" & $targetPageUrl & "\"," &

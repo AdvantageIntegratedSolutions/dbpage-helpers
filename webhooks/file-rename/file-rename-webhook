@@ -1,0 +1,21 @@
+Example webhook location:
+https://advantageintegratedsolutionsinc.quickbase.com/db/bpmpky53p?a=GenWebhookEdit&id=5
+
+Endpoint URL: https://us-central1-form-engine-prod.cloudfunctions.net/fileRename
+HTTP Method: POST
+Message format: JSON
+Message header: (none)
+
+Message Body:
+{
+  "dbid": "%dbid%",
+  "rid": [Record ID#],
+  "sourceFid": 20, 
+  "uploadFid": 20, 
+  "statusFid": 36,
+  "newName": "[New Filename]",
+  "connection": {
+     "userToken": "b3t2xq_bcf_89fq2bcniizy6b3y4b5nwdv82m",
+     "realm": "advantageintegratedsolutionsinc"
+  }
+}
