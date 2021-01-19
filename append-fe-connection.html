@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.1.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'>Append FE Connection</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+    // required query params
+    // targetUrl: a URI-encoded form engine Url
+    // raegetRealm: realm used to build Conneciton
+    
+    // example
+    // targetUrl: encodeURIComponent('https://www.quickbnase.formengine.com/#!/render-template?templateId=-MR6gzm2XUlPTZtQMqCb&action=print&rids=%7B"-MR6h6nLIoZFM5rbjGyQ":1512%7D')
+    // targetRealm: advantageintegratedsolutionsinc
+    // thisDBPage: https://advantageintegratedsolutionsinc.quickbase.com/db/bmvbhkvyy?a=dbpage&pageID=10
+    // full demo URL
+    // https://advantageintegratedsolutionsinc.quickbase.com/db/bmvbhkvyy?a=dbpage&pageID=10&targetRealm=advantageintegratedsolutionsinc&targetUrl=https%3A%2F%2Fquickbase.formengine.com%2F%23!%2Frender-template%3FtemplateId%3D-MR6gzm2XUlPTZtQMqCb%26action%3Dprint%26rids%3D%257B%22-MR6h6nLIoZFM5rbjGyQ%22%3A1512%257D
+  
+  $( document ).ready(function() {
+    makeRequest();
+  });
+
+  async function makeRequest(){
+    var config = {
+      async: 'promise',
+      realm: window.location.host.split('.')[0], //dbpage realm
+    }
+    
+    // BaseJS tool to get ticket (expires in 5min)
+    var ticket = await (new Base(config)).getOneTimeTicket();
+    
+    //BaseJS tool to extract URL params
+    var targetUrl = BaseHelpers.getUrlParam('targetUrl');
+    var realm = BaseHelpers.getUrlParam('targetRealm');
+    
+    console.log({targetUrl, realm});
+    
+    targetUrl += targetUrl.includes('?') ? '&' : '?';
+    // append FE connection
+    targetUrl += `connection=${JSON.stringify({realm, ticket})}`
+    console.log('url with connection:', targetUrl);
+    debugger;
+    //open FE page
+    window.open(targetUrl)
+    
+    //\\
+  }
+  </script>
+  <style>
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>
