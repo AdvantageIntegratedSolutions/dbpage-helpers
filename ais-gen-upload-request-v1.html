@@ -89,6 +89,7 @@
     //rarely modified
     var Text pageMargin =      "0.5in";
     var Text pageFormat =      "A4";
+    var Text mediaType =       "print" // @media screen{...}
     var Text printBackground = "true"; // set to "false" to conserve printer ink
     var Text waitSelectors =   "[]"; // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
 
@@ -132,6 +133,7 @@
           "\"customOptions\": {" &
             "\"waitEval\": false," &
             "\"imgEval\": true," &
+            "\"mediaType\": " & $mediaType & "," &
             "\"waitSelectors\": " & $waitSelectors & "," &
             "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
             "\"scriptTags\": []" &
