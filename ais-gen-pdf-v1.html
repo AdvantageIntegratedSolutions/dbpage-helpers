@@ -50,6 +50,14 @@
   }
   
   function handleSuccess(res, params) {
+    domObject()
+    if(res.errorMessages.length) {
+      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
+    }
+    
+  }
+  
+  function domObject(src) {
     var objbuilder = '';
     objbuilder += ('<object width="100%" height="100%" data="');
     objbuilder += (res.pdf);
@@ -61,11 +69,6 @@
     document.body.innerHTML = objbuilder;
     document.body.style.height = '100vh';
     document.body.style.margin = 0;
-    
-    if(res.errorMessages.length) {
-      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
-    }
-    
   }
   </script>
   <!-- 

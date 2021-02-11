@@ -27,12 +27,12 @@
     var appToken = BaseHelpers.getUrlParam('apptoken');
     params.uploadParams.connection = { realm: config.realm, ticket: ticket }
     if (appToken) params.uploadParams.connection.appToken = appToken;
-    params.genOptions.url += `&ticket=${ticket}`
+    params.genOptions.url += `&ticket=${ticket}`;
     return params;
   }
 
   function makeRequest(params){
-    var endpoint = 'https://us-central1-form-engine-92d38.cloudfunctions.net/uploadViaGenFromUrl';
+    var endpoint = 'https://us-central1-form-engine-prod.cloudfunctions.net/uploadViaGenFromUrl';
     // var endpoint = 'http://localhost:5000/form-engine-92d38/us-central1/uploadViaGenFromUrl';
 
     $.ajax({
@@ -66,11 +66,22 @@
     if (returnUrl) {
       location.href = returnUrl;
       
+    } else if (((res.response || {}).file_fields || [])[0].url){
+      domObject(res.response.file_fields[0].url)
     } else {
       $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
       setTimeout(() => history.back(), 2000);
     }
     
+    function domObject(src) {
+      var objbuilder = '';
+      objbuilder += '<object width="100%" height="100%" data="';
+      objbuilder += src.split('quickbase.com')[1] || src;
+      objbuilder += '" type="application/pdf"></object>';
+      document.body.innerHTML = document.body.innerHTML + '\n' + objbuilder;
+      document.body.style.height = '100vh';
+      document.body.style.margin = 0;
+    }
   }
   </script>
   <!-- 
