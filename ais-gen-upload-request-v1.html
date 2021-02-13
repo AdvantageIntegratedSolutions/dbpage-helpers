@@ -62,15 +62,15 @@
     $('body').append(`<h2>SUCCESS!</h2>`);
     
     var returnUrl = BaseHelpers.getUrlParam('returnUrl');
+    var openFile = BaseHelpers.getUrlParam('openFile');
     
     if (returnUrl) {
       location.href = returnUrl;
-      
-    } else if (((res.response || {}).file_fields || [])[0].url){
+    } else if (openFile && ((res.response || {}).file_fields || [])[0].url){
       domObject(res.response.file_fields[0].url)
     } else {
       $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
-      setTimeout(() => history.back(), 2000);
+      setTimeout(() => (history.length > 1) ? history.back() : window.close(), 2000);
     }
     
     function domObject(src) {
@@ -82,85 +82,93 @@
       document.body.style.height = '100vh';
       document.body.style.margin = 0;
     }
+
   }
   </script>
   <!-- 
-    //QB FORMULA
-    //static - do not change
-    var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
-    var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-upload-request-v1.html"; //ensure this dbPage exists
+  //QB FORMULA
+//static - do not change
+var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
+var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-upload-request-v1.html"; //ensure this dbPage exists
 
-    //basic info
-    var Text fileName =       "Royalty Invoice - " & [Year Licensee Key] & ".pdf"; 
-    var Number pdfUploadFid = 69;           //FID of file attachemnt field in this table. set to 0 to omit upload
-    var Number pdfUploadRid = [Record ID#]; //RID to upload attachment to. set to 0 to omit upload
-    var Text targetPageUrl =  $dbPageBase & "pageID=9&licYearRid=" & [Record ID#]; //form/page to print
-    var Text returnUrl =     "https://${realm}.quickbase.com/up/" & Dbid() & "/a/r" & [Record ID#] & "/e" & $pdfUploadFid & "/v0";
-    var Boolean openFile =   false;
-    //rarely modified
-    var Text pageMargin =      "0.5in";
-    var Text pageFormat =      "A4";
-    var Text mediaType =       "print" // @media screen{...}
-    var Text printBackground = "true"; // set to "false" to conserve printer ink
-    var Text waitSelectors =   "[]"; // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
+//basic info
+var Text fileName =       "HHAProgressNote_" & SearchAndReplace(ToText(Now()), ":", "") & ".pdf"; 
+var Number pdfUploadFid = 265;           //FID of file attachemnt field in this table. set to 0 to omit upload
+var Number pdfUploadRid = [Record ID#]; //RID to upload attachment to. set to 0 to omit upload
+var Text targetPageUrl =  "https://nuclearcarepartners.quickbase.com/db/bf5rkjxif?a=dbpage&pageID=96&patient_id=" & [Record ID#] & "&start_date=" & [Billing Period Start Date] & "&end_date=" & [Billing Period End Date (2 weeks)]; //form/page to print
 
-    //Repeating Header/Footer: Set to "<div></div>" to omit. set to "" for default. See note below.
-    var Text header = "<div></div>";
-    var Text footer = "<div></div>";
-    
-    //  FOOTER EXAMPLE - page X of Y on bottom right
-    //  "<div style='font-size: 12px; width: 100%; display: flex; justify-content: flex-end; margin-right: 0.5in'>" & 
-    //      "<div>Page&nbsp;</div>" & 
-    //      "<div class='pageNumber'></div>" & 
-    //      "<div>&nbsp;of&nbsp;</div>" & 
-    //      "<div class='totalPages'></div>" & 
-    //  "</div>";
+// page behavior
+var Bool openFile = false; // try to open/download file
 
-    //  footer/header is raw html that will repeat on each page.
-    //  special classes available for header/footer:
-    // - <div class='date'></div>:        formatted print date
-    // - <div class='title'></div>:       document title
-    // - <div class='url'></div>:         document location
-    // - <div class='pageNumber'></div>:  current page number
-    // - <div class='totalPages'></div>:  total pages in the document
+//rarely modified
+var Text pageMargin =      "0.5in 0.25in";
+var Text pageFormat =      "A4";
+var Text printBackground = "true"; // set to "false" to conserve printer ink
+var Text mediaType =       "screen";  // choose "screen" for non-print view @media screen{...}
+var Text waitSelectors =   "[]";   // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
 
-    //  ONLY the above classes will have an effect. 
-    //  Other styles must be applied INLINE within header/footer HTML
+//Repeating Header/Footer: Set to "<div></div>" to omit. set to "" for default. See note below.
+var Text header =   "<div style='margin: 0 0.5in; font-size: 9px; width: 100%; display: flex; justify-content: space-between;'>" & 
+                        "<div style='display: flex;'></div>" & 
+                        "<div style='display: flex;'>" & [Billing Period Start Date] & " through " & [Billing Period End Date (2 weeks)]  & "</div>" & 
+                        "<div style='display: flex;'>" & 
+                            "<div class='pageNumber'></div> &nbsp;of&nbsp; <div class='totalPages'></div>" & 
+                        "</div>" & 
+                    "</div>";
+var Text footer = "<div></div>";
 
+//  FOOTER EXAMPLE - page X of Y on bottom right
+//  "<div style='font-size: 12px; width: 100%; display: flex; justify-content: flex-end; margin-right: 0.5in'>" & 
+//      "<div>Page&nbsp;</div>" & 
+//      "<div class='pageNumber'></div>" & 
+//      "<div>&nbsp;of&nbsp;</div>" & 
+//      "<div class='totalPages'></div>" & 
+//  "</div>";
+
+//  footer/header is raw html that will repeat on each page.
+//  special classes available for header/footer:
+// - <div class='date'></div>:        formatted print date
+// - <div class='title'></div>:       document title
+// - <div class='url'></div>:         document location
+// - <div class='pageNumber'></div>:  current page number
+// - <div class='totalPages'></div>:  total pages in the document
+
+//  ONLY the above classes will have an effect. 
+//  Other styles must be applied INLINE within header/footer HTML
 
     $pdfHandlerPage & 
-    "&returnUrl=" & $returnUrl & 
+    // "&returnUrl=" & $returnUrl & 
     If($openFile, "&openFile=true", "") & "&params=" & URLEncode(
-    "{" &
-        "\"genOptions\": {" &
-          "\"url\": \"" & $targetPageUrl & "\"," &
-          "\"pdfOptions\": {"  &
-            "\"displayHeaderFooter\": true," &
-            "\"headerTemplate\": \"" & $header & "\"," &
-            "\"footerTemplate\": \"" & $footer & "\"," &
-            "\"printBackground\": " & $printBackground & "," &
-            "\"format\": \"" & $pageFormat & "\"" &
-          "}," &
-          "\"customOptions\": {" &
-            "\"waitEval\": false," &
-            "\"imgEval\": true," &
-            "\"mediaType\": " & $mediaType & "," &
-            "\"waitSelectors\": " & $waitSelectors & "," &
-            "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
-            "\"scriptTags\": []" &
-          "}" &
+"{" &
+    "\"genOptions\": {" &
+      "\"url\": \"" & $targetPageUrl & "\"," &
+      "\"pdfOptions\": {"  &
+        "\"displayHeaderFooter\": true," &
+        "\"headerTemplate\": \"" & $header & "\"," &
+        "\"footerTemplate\": \"" & $footer & "\"," &
+        "\"printBackground\": " & $printBackground & "," &
+        "\"format\": \"" & $pageFormat & "\"" &
       "}," &
-      "\"uploadParams\": {" & 
-        "\"query\": {" & 
-            "\"dbid\": \"" & Dbid() & "\"," & 
-            "\"rid\": \"" & $pdfUploadRid & "\"," & 
-            "\"field\": {" &
-                "\"fid\": \"" & $pdfUploadFid & "\"," & 
-                "\"filename\": \"" & $filename & "\"" & 
-            "}" &
-        "}" &
+      "\"customOptions\": {" &
+        "\"waitEval\": false," &
+        "\"imgEval\": true," &
+        "\"mediaType\": \"" & $mediaType & "\"," &
+        "\"waitSelectors\": " & $waitSelectors & "," &
+        "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
+        "\"scriptTags\": []" &
       "}" &
-    "}")
+  "}," &
+  "\"uploadParams\": {" & 
+    "\"query\": {" & 
+        "\"dbid\": \"" & Dbid() & "\"," & 
+        "\"rid\": \"" & $pdfUploadRid & "\"," & 
+        "\"field\": {" &
+            "\"fid\": \"" & $pdfUploadFid & "\"," & 
+            "\"filename\": \"" & $filename & "\"" & 
+        "}" &
+    "}" &
+  "}" &
+"}")
    -->
   <style>
     #rct-loader:before, #rct-loader:after{
