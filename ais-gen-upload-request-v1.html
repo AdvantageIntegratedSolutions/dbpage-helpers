@@ -70,7 +70,7 @@
       domObject(res.response.file_fields[0].url)
     } else {
       $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
-      setTimeout(() => (history.length > 1) ? history.back() : window.close(), 2000);
+      setTimeout(() => history.back() || window.close(), 2000);
     }
     
     function domObject(src) {
