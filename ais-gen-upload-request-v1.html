@@ -58,7 +58,7 @@
   
   function handleSuccess(res, params) {
     if(res.errorMessages.length) {
-      return res.errorMessages.map(msg => $('body').append(errorHtml).append(`<h4>${msg}</h4>`));
+      return res.errorMessages.map(msg => $('body').append(errorHtml).append(`<h4 class="failure-msg">${msg}</h4>`));
     }
     
     $('body').append(successHtml);
