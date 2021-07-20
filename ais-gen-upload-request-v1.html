@@ -56,10 +56,10 @@
   
   function handleSuccess(res, params) {
     if(res.errorMessages.length) {
-      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
+      return res.errorMessages.map(msg => $('body').append(`<h2 class="gen-complete gen-failure">ERROR!</h2>`).append(`<h4>${msg}</h4>`));
     }
     
-    $('body').append(`<h2>SUCCESS!</h2>`);
+    $('body').append(`<h2 class="gen-complete gen-success">SUCCESS!</h2>`);
     
     var returnUrl = BaseHelpers.getUrlParam('returnUrl');
     var openFile = BaseHelpers.getUrlParam('openFile');
