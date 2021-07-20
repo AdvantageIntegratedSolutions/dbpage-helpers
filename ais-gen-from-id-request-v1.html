@@ -9,6 +9,9 @@
   <div class="loader-wrapper"><div id="rct-loader"></div></div>
   <script>
   
+  var errorHtml = `<h2 class="gen-complete gen-failure">ERROR!</h2>`
+  var successHtml = `<h2 class="gen-complete gen-success">SUCCESS!</h2>`
+  
   var config = {
     async: 'promise',
     realm: window.location.host.split('.')[0]
@@ -49,7 +52,7 @@
       },
       error: function(err){{
         console.log({err, params})
-        $('body').append(`<h2>ERROR!</h2>`)
+        $('body').append(errorHtml)
         $('body').append(JSON.stringify(err))
         $('.loader-wrapper').hide();
       }}
@@ -58,10 +61,10 @@
   
   function handleSuccess(res, params) {
     if(res.errorMessages.length) {
-      return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
+      return res.errorMessages.map(msg => $('body').append(errorHtml).append(`<h4>${msg}</h4>`));
     }
     
-    $('body').append(`<h2>SUCCESS!</h2>`);
+    $('body').append(successHtml);
     $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
     var returnUrl = BaseHelpers.getUrlParam('returnUrl')
     
