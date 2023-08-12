@@ -1,0 +1,264 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.2.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'>PDF Uploader</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+    // v2 allows for adding a new record
+    var baseConfig = {
+      async: 'promise',
+      realm: window.location.host.split('.')[0]
+    }
+    
+    $( document ).ready(function(){runReq()});
+    
+    async function runReq() {
+      debugger;
+      var token = BaseHelpers.getUrlParam('apptoken');
+      var newRecord = BaseHelpers.getUrlParam('newRecord');
+      if (token) baseConfig = {...baseConfig, token};
+      var ticket = await (new Base(baseConfig)).getOneTimeTicket();
+      var newRid = newRecord ? await addRecord() : null;
+      if (newRid) console.log(`New RID: ${newRid}`);
+      var params = prepRequest(ticket, newRid);
+      debugger;
+      makeRequest(params);
+    }
+    
+    var errorHtml = `<h2 class="gen-complete gen-failure">ERROR!</h2>`;
+    var successHtml = `<h2 class="gen-complete gen-success">SUCCESS!</h2>`;
+    
+    function addRecord() {
+      var params = JSON.parse(BaseHelpers.getUrlParam('params'));
+      var newRecord = JSON.parse(BaseHelpers.getUrlParam('newRecord'));
+      
+      var config = {
+        ...baseConfig,
+        tables: {
+          targetTable: {
+            dbid: params.uploadParams.query.dbid,
+          }
+        }
+      };
+
+      var db = new Base( config );
+      return db.targetTable.addRecord(newRecord)
+    }
+    
+    function prepRequest(ticket, newRid) {
+      var params = JSON.parse(BaseHelpers.getUrlParam('params'));
+      var appToken = BaseHelpers.getUrlParam('apptoken');
+      params.uploadParams.connection = { realm: baseConfig.realm, ticket: ticket }
+      if (appToken) params.uploadParams.connection.appToken = appToken;
+      if (newRid) params.uploadParams.query.rid = newRid;
+      params.genOptions.url += `&ticket=${ticket}`;
+      return params;
+    }
+
+    function makeRequest(params){
+      var endpoint = 'https://us-central1-form-engine-prod.cloudfunctions.net/uploadViaGenFromUrl';
+      // var endpoint = 'http://localhost:5000/form-engine-92d38/us-central1/uploadViaGenFromUrl';
+      $.ajax({
+        type: 'POST',
+        url: endpoint,
+        data: JSON.stringify(params),
+        contentType: 'application/json',
+        success: function(res){
+          console.log({res, params});
+          handleSuccess(res, params);
+          $('.loader-wrapper').hide();
+        },
+        error: function(err){{
+          console.log({err, params})
+          $('body').append(errorHtml)
+          $('body').append(JSON.stringify(err))
+          $('.loader-wrapper').hide();
+        }}
+      })
+    }
+    
+    function handleSuccess(res, params) {
+      if(res.errorMessages.length) {
+        return res.errorMessages.map(msg => $('body').append(errorHtml).append(`<h4 class="failure-msg">${msg}</h4>`));
+      }
+      
+      $('body').append(successHtml);
+      
+      var returnUrl = BaseHelpers.getUrlParam('returnUrl');
+      var openFile = BaseHelpers.getUrlParam('openFile');
+      
+      if (returnUrl) {
+        location.href = returnUrl;
+      } else if (openFile && ((res.response || {}).file_fields || [])[0].url){
+        domObject(res.response.file_fields[0].url)
+      } else {
+        $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
+        setTimeout(() => history.back() || window.close(), 2000);
+      }
+      
+      function domObject(src) {
+        var objbuilder = '';
+        objbuilder += '<object width="100%" height="100%" data="';
+        objbuilder += src.split('quickbase.com')[1] || src;
+        objbuilder += '" type="application/pdf"></object>';
+        document.body.innerHTML = document.body.innerHTML + '\n' + objbuilder;
+        document.body.style.height = '100vh';
+        document.body.style.margin = 0;
+      }
+
+    }
+  </script>
+  <!-- 
+//QB FORMULA
+//static - do not change
+var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage";
+var Text pdfHandlerPage = $dbPageBase & "&pagename=ais-gen-upload-request-v2.html"; //ensure this dbPage exists
+
+//basic info
+var Text apptoken = ""; // leave empty unless realm requires apptoken
+var Text targetPageUrl =  $dbPageBase & "&pageID=43&rid=" & $rid & "&cnum=" & $cnum & "&decision=" & $decision; //form/page to print
+
+var Text fileName =       $cnum & "_COB_" & ToText(Now()) & ".pdf"; 
+var Text pdfUploadDbid = "bkw73x9e2";  // Dbid()
+var Number pdfUploadFid = 6;           //FID of file attachemnt field in this table. set to 0 to omit upload
+var Number pdfUploadRid = 0;           //RID to upload attachment to. set to 0 to omit upload or use newRecord
+
+// new record in pdfUploadDbid
+// without the file attachment
+// set to "" when using existing record 
+var Text newRecord = "";
+// example newRecord = URLEncode("{" &
+//   "\"7\": \"" & $cnum & "\"," &
+//   "\"8\": \"" & $decision & "\"," &
+//   "\"12\": \"" & UserToId(User()) & "\"" &
+// "}");
+
+// page behavior
+var Bool openFile = false; // try to open/download file
+
+//rarely modified
+var Text pageMargin =      "0.5in 0.25in";
+var Text pageFormat =      "A4";
+var Text printBackground = "true"; // set to "false" to conserve printer ink
+var Text mediaType =       "screen";  // choose "screen" for non-print view @media screen{...}
+var Text waitSelectors =   "[]";   // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
+
+//Repeating Header/Footer: Set to "<div></div>" to omit. set to "" for default. See note below.
+var Text header = "<div></div>"; 
+var Text footer =   "<div style='margin: 0 0.5in; font-size: 9px; width: 100%;'>" & 
+                        "<div style='display: flex;'>" & [Customer Name]  & " / " & $cnum & " / Amendment # " & [Amendment #]  & "</div>" & 
+                    "</div>";
+
+//  FOOTER EXAMPLE - page X of Y on bottom right
+//  "<div style='font-size: 12px; width: 100%; display: flex; justify-content: flex-end; margin-right: 0.5in'>" & 
+//      "<div>Page&nbsp;</div>" & 
+//      "<div class='pageNumber'></div>" & 
+//      "<div>&nbsp;of&nbsp;</div>" & 
+//      "<div class='totalPages'></div>" & 
+//  "</div>";
+
+//  footer/header is raw html that will repeat on each page.
+//  special classes available for header/footer:
+// - <div class='date'></div>:        formatted print date
+// - <div class='title'></div>:       document title
+// - <div class='url'></div>:         document location
+// - <div class='pageNumber'></div>:  current page number
+// - <div class='totalPages'></div>:  total pages in the document
+
+//  ONLY the above classes will have an effect. 
+//  Other styles must be applied INLINE within header/footer HTML
+
+var Text genParams = URLEncode(
+"{" &
+    "\"genOptions\": {" &
+      "\"url\": \"" & $targetPageUrl & "\"," &
+      "\"pdfOptions\": {"  &
+        "\"displayHeaderFooter\": true," &
+        "\"headerTemplate\": \"" & $header & "\"," &
+        "\"footerTemplate\": \"" & $footer & "\"," &
+        "\"printBackground\": " & $printBackground & "," &
+        "\"format\": \"" & $pageFormat & "\"" &
+      "}," &
+      "\"customOptions\": {" &
+        "\"waitEval\": false," &
+        "\"imgEval\": true," &
+        "\"mediaType\": \"" & $mediaType & "\"," &
+        "\"waitSelectors\": " & $waitSelectors & "," &
+        "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
+        "\"scriptTags\": []" &
+      "}" &
+  "}," &
+  "\"uploadParams\": {" & 
+    "\"query\": {" & 
+        "\"dbid\": \"" & $pdfUploadDbid & "\"," & 
+        "\"rid\": \"" & $pdfUploadRid & "\"," & 
+        "\"field\": {" &
+            "\"fid\": \"" & $pdfUploadFid & "\"," & 
+            "\"filename\": \"" & $filename & "\"" & 
+        "}" &
+    "}" &
+  "}" &
+"}");
+   
+$pdfHandlerPage & 
+// "&returnUrl=" & $returnUrl & 
+If($openFile, "&openFile=true", "") & 
+"&apptoken=" & $apptoken &
+"&newRecord=" & $newRecord &
+"&params=" & $genParams
+ 
+   -->
+  <style>
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://s3.amazonaws.com/ais_libraries/BaseJS/5.1.0/base.min.js"></script>
+</head>
+<body>
+  <h3 class='title'>PDF Uploader</h3>
+  <div class="loader-wrapper"><div id="rct-loader"></div></div>
+  <script>
+  var ticket;
+  var qParams = JSON.parse(BaseHelpers.getUrlParam('params'));
+  
+  var errorHtml = `<h2 class="gen-complete gen-failure">ERROR!</h2>`
+  var successHtml = `<h2 class="gen-complete gen-success">SUCCESS!</h2>`
+  
+  var config = {
+    async: 'promise',
+    realm: window.location.host.split('.')[0],
+    tables: {
+      documents: {dbid: 'bibsydwy8', rid: 3}
+    }
+  }
+  var genBaseDB = new Base(config);
+  
+  
+  $( document ).ready(function() {
+    getTicket().then(function(t) {
+      ticket = t;
+      var ticketAppender = `
+function GetURLParameter(sParam){
+  var sPageURL = window.location.search.substring(1);
+  var sURLVariables = sPageURL.split('&');
+  for (var i = 0; i < sURLVariables.length; i++) {
+    var sParameterName = sURLVariables[i].split('=');
+    if (sParameterName[0] == sParam) return sParameterName[1];
+  }
+}
+function setPageReady() {
+  (typeof window.pageIsReady === 'function') ?
+    window.pageIsReady("Form Loaded") :
+    window.pageIsReady = true;
+}
+var paramTicket = GetURLParameter('ticket')
+if (paramTicket) {
+  console.log('appending ticket to SRCs');
+  Array.from(document.querySelectorAll('img[src*="rci"]')).forEach(function(el) {
+    console.log('updating img src', el.src);
+    var orig = el.src;
+    var delim = orig.includes('?') ? ':' : '?';
+    el.src = orig + delim + 'ticket=' + paramTicket;
+    console.log('new src', el.src);
+    
+  })
+}
+var overlayEl = document.querySelector('#overlay');
+if (overlayEl) {
+  console.log('has overlay');
+  setInterval(() => {
+    console.log('vis:', overlayEl.style.visibility);
+    if (overlayEl.style.display === 'none') {
+      console.log('overlay now hidden');
+      setPageReady();
+    }
+  }, 100);
+} else {
+  setPageReady();
+}
+`
+      qParams.genOptions.customOptions.scriptTags.push({content: ticketAppender})
+      qParams.genOptions.url += `&ticket=${ticket}`;
+      console.log('ticket', t);
+      
+      console.log('genurl', qParams.genOptions.url);
+      window.open(qParams.genOptions.url, '_blank')
+      addDocumentRecord().then(prepRequest).then(makeRequest)
+    });
+  });
+  
+  function getTicket(){
+    return genBaseDB.getOneTimeTicket();
+  }
+  
+  function addDocumentRecord() {
+    return genBaseDB.documents.addRecord(qParams.documentRecord);
+  }
+  
+  function prepRequest(rid) {
+    console.log('documents rid', rid);
+    qParams.uploadParams.query.rid = rid;
+    var appToken = BaseHelpers.getUrlParam('apptoken');
+    delete qParams.documentRecord;
+    qParams.uploadParams.connection = { realm: config.realm, ticket: ticket }
+    if (appToken) qParams.uploadParams.connection.appToken = appToken;
+    return qParams;
+  }
+
+  function makeRequest(qParams){
+    var endpoint = 'https://us-central1-form-engine-prod.cloudfunctions.net/uploadViaGenFromUrl';
+    // var endpoint = 'http://localhost:5000/form-engine-92d38/us-central1/uploadViaGenFromUrl';
+    $.ajax({
+      type: 'POST',
+      url: endpoint,
+      data: JSON.stringify(qParams),
+      contentType: 'application/json',
+      success: function(res){
+        console.log({res, qParams});
+        handleSuccess(res, qParams);
+        $('.loader-wrapper').hide();
+      },
+      error: function(err){{
+        console.log({err, qParams})
+        $('body').append(errorHtml)
+        $('body').append(JSON.stringify(err))
+        $('.loader-wrapper').hide();
+      }}
+    })
+  }
+  
+  function handleSuccess(res, qParams) {
+    if(res.errorMessages.length) {
+      return res.errorMessages.map(msg => $('body').append(errorHtml).append(`<h4 class="failure-msg">${msg}</h4>`));
+    }
+    
+    $('body').append(successHtml);
+    
+    var returnUrl = BaseHelpers.getUrlParam('returnUrl');
+    var openFile = BaseHelpers.getUrlParam('openFile');
+    
+    if (returnUrl) {
+      location.href = returnUrl;
+    } else if (openFile && ((res.response || {}).file_fields || [])[0].url){
+      domObject(res.response.file_fields[0].url)
+    } else {
+      $('body').append(`<h3>This window will close automatically in 2 seconds</h3>`);
+      setTimeout(() => history.back() || window.close(), 2000);
+    }
+    
+    function domObject(src) {
+      var objbuilder = '';
+      objbuilder += '<object width="100%" height="100%" data="';
+      objbuilder += src.split('quickbase.com')[1] || src;
+      objbuilder += '" type="application/pdf"></object>';
+      document.body.innerHTML = document.body.innerHTML + '\n' + objbuilder;
+      document.body.style.height = '100vh';
+      document.body.style.margin = 0;
+    }
+
+  }
+  </script>
+  <!-- 
+  //QB FORMULA
+//static - do not change
+var Text dbPageBase = URLRoot() & "db/" & AppID() & "?a=dbpage&";
+var Text pdfHandlerPage = $dbPageBase & "pagename=ais-gen-upload-request-v1.html"; //ensure this dbPage exists
+
+//basic info
+var Text fileName =       "HHAProgressNote_" & SearchAndReplace(ToText(Now()), ":", "") & ".pdf"; 
+var Number pdfUploadFid = 265;           //FID of file attachemnt field in this table. set to 0 to omit upload
+var Number pdfUploadRid = [Record ID#]; //RID to upload attachment to. set to 0 to omit upload
+var Text targetPageUrl =  "https://nuclearcarepartners.quickbase.com/db/bf5rkjxif?a=dbpage&pageID=96&patient_id=" & [Record ID#] & "&start_date=" & [Billing Period Start Date] & "&end_date=" & [Billing Period End Date (2 weeks)]; //form/page to print
+
+// page behavior
+var Bool openFile = false; // try to open/download file
+
+//rarely modified
+var Text pageMargin =      "0.5in 0.25in";
+var Text pageFormat =      "A4";
+var Text printBackground = "true"; // set to "false" to conserve printer ink
+var Text mediaType =       "screen";  // choose "screen" for non-print view @media screen{...}
+var Text waitSelectors =   "[]";   // wait until these elements exist to print ex. "[\".special-class\", \"#item-id\"]"
+
+//Repeating Header/Footer: Set to "<div></div>" to omit. set to "" for default. See note below.
+var Text header =   "<div style='margin: 0 0.5in; font-size: 9px; width: 100%; display: flex; justify-content: space-between;'>" & 
+                        "<div style='display: flex;'></div>" & 
+                        "<div style='display: flex;'>" & [Billing Period Start Date] & " through " & [Billing Period End Date (2 weeks)]  & "</div>" & 
+                        "<div style='display: flex;'>" & 
+                            "<div class='pageNumber'></div> &nbsp;of&nbsp; <div class='totalPages'></div>" & 
+                        "</div>" & 
+                    "</div>";
+var Text footer = "<div></div>";
+
+//  FOOTER EXAMPLE - page X of Y on bottom right
+//  "<div style='font-size: 12px; width: 100%; display: flex; justify-content: flex-end; margin-right: 0.5in'>" & 
+//      "<div>Page&nbsp;</div>" & 
+//      "<div class='pageNumber'></div>" & 
+//      "<div>&nbsp;of&nbsp;</div>" & 
+//      "<div class='totalPages'></div>" & 
+//  "</div>";
+
+//  footer/header is raw html that will repeat on each page.
+//  special classes available for header/footer:
+// - <div class='date'></div>:        formatted print date
+// - <div class='title'></div>:       document title
+// - <div class='url'></div>:         document location
+// - <div class='pageNumber'></div>:  current page number
+// - <div class='totalPages'></div>:  total pages in the document
+
+//  ONLY the above classes will have an effect. 
+//  Other styles must be applied INLINE within header/footer HTML
+
+    $pdfHandlerPage & 
+    // "&returnUrl=" & $returnUrl & 
+    If($openFile, "&openFile=true", "") & "&params=" & URLEncode(
+"{" &
+    "\"genOptions\": {" &
+      "\"url\": \"" & $targetPageUrl & "\"," &
+      "\"pdfOptions\": {"  &
+        "\"displayHeaderFooter\": true," &
+        "\"headerTemplate\": \"" & $header & "\"," &
+        "\"footerTemplate\": \"" & $footer & "\"," &
+        "\"printBackground\": " & $printBackground & "," &
+        "\"format\": \"" & $pageFormat & "\"" &
+      "}," &
+      "\"customOptions\": {" &
+        "\"waitEval\": false," &
+        "\"imgEval\": true," &
+        "\"mediaType\": \"" & $mediaType & "\"," &
+        "\"waitSelectors\": " & $waitSelectors & "," &
+        "\"styleTags\": [{\"content\": \"@page {margin: " & $pageMargin & "\"}]," &
+        "\"scriptTags\": []" &
+      "}" &
+  "}," &
+  "\"uploadParams\": {" & 
+    "\"query\": {" & 
+        "\"dbid\": \"" & Dbid() & "\"," & 
+        "\"rid\": \"" & $pdfUploadRid & "\"," & 
+        "\"field\": {" &
+            "\"fid\": \"" & $pdfUploadFid & "\"," & 
+            "\"filename\": \"" & $filename & "\"" & 
+        "}" &
+    "}" &
+  "}" &
+"}")
+   -->
+  <style>
+    #rct-loader:before, #rct-loader:after{
+      content: "";
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 10px);
+      top: calc(40%);
+      background-color: black;
+      animation: squaremove 1s ease-in-out infinite;
+    }
+
+    #rct-loader:after{
+      bottom: 0;
+      animation-delay: 0.5s;
+    }
+
+    @keyframes squaremove{
+      0%, 100%{
+        -webkit-transform: translate(0,0) rotate(0);
+        -ms-transform: translate(0,0) rotate(0);
+        -o-transform: translate(0,0) rotate(0);
+        transform: translate(0,0) rotate(0);
+      }
+
+      25%{
+        -webkit-transform: translate(80px,80px) rotate(45deg);
+        -ms-transform: translate(80px,80px) rotate(45deg);
+        -o-transform: translate(80px,80px) rotate(45deg);
+        transform: translate(80px,80px) rotate(45deg);
+      }
+
+      50%{
+        -webkit-transform: translate(0px,160px) rotate(0deg);
+        -ms-transform: translate(0px,160px) rotate(0deg);
+        -o-transform: translate(0px,160px) rotate(0deg);
+        transform: translate(0px,160px) rotate(0deg);
+      }
+
+      75%{
+        -webkit-transform: translate(-80px,80px) rotate(45deg);
+        -ms-transform: translate(-80px,80px) rotate(45deg);
+        -o-transform: translate(-80px,80px) rotate(45deg);
+        transform: translate(-80px,80px) rotate(45deg);
+      }
+    }
+  </style>
+</body>
+</html>
