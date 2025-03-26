@@ -50,20 +50,21 @@
   }
   
   function handleSuccess(res, params) {
-    domObject()
-    if(res.errorMessages.length) {
+    if (res.errorMessages.length) {
       return res.errorMessages.map(msg => $('body').append(`<h2>ERROR!</h2>`).append(`<h4>${msg}</h4>`));
     }
-    
+    domObject(res.pdf)
   }
   
   function domObject(src) {
+    var mime = 'data:application/pdf;base64,';
+    var b64Pdf = mime + src.replace(mime, '');
     var objbuilder = '';
-    objbuilder += ('<object width="100%" height="100%" data="');
-    objbuilder += (res.pdf);
+    objbuilder += ('<object width=100%" height="100%" data="');
+    objbuilder += (b64Pdf);
     objbuilder += ('" type="application/pdf" class="internal">');
     objbuilder += ('<embed src="');
-    objbuilder += (res.pdf);
+    objbuilder += (b64Pdf);
     objbuilder += ('" type="application/pdf" />');
     objbuilder += ('</object>');
     document.body.innerHTML = objbuilder;
